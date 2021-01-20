@@ -21,3 +21,7 @@ checks:
 
 exclude_patterns:
   - "tests/"
+
+plugins:
+  pylint:
+    enabled: true
