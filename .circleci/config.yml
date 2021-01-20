@@ -1,0 +1,99 @@
+version: 2.1
+workflows:
+  build_and_deploy:
+    jobs:
+      - test-and-coverage:
+          name: "test-coverage"
+      - dry-run-deploy:
+          name: "dry-run-deploy"
+          requires:
+            - test-coverage
+      - deploy:
+          requires:
+            - dry-run-deploy
+          filters:
+            branches:
+              only: main
+jobs:
+   test-and-coverage:
+    docker:
+      - image: circleci/python:3.7
+        environment:
+         - CC_TEST_REPORTER_ID: 
+    steps:
+      - checkout
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv env
+            . env/bin/activate
+            pip3 install requirements.test.txt
+      - run:
+          name: install codeclimate test-reporter
+          command: |
+            # download test reporter as a static binary
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+            chmod +x ./cc-test-reporter
+      - run:
+          command: |
+            ./cc-test-reporter before-build
+      - run:
+          name: run tests
+          command: |
+              coverage report --omit=env/*,tests/*
+              coverage html --omit=env/*,tests/*
+              coverage xml --omit=env/*,tests/*
+      - run:
+          name: Run coverage report
+          command: |
+            . env/bin/activate
+            echo $CC_TEST_REPORTER_ID
+            ./cc-test-reporter format-coverage -t coverage.py 
+            ./cc-test-reporter upload-coverage
+      - run:
+          command: |
+            ./cc-test-reporter after-build --exit-code $?
+      - store_artifacts:
+          path: htmlcov/
+  dry-run-deploy:
+    docker:
+      - image: circleci/python:3.7
+    steps:
+      - checkout
+      - run:
+          name: Install Python Dependencies
+          command: |
+            python3 -m venv env
+            . env/bin/activate
+            pip3 install requirements.txt
+      - run:
+          name: Build Release package
+          command: |
+            pip3 install twine
+            python3 setup.py bdist_wheel
+      - run:
+          name: Upload to PyPi
+          command: |
+            . env/bin/activate
+            twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+  deploy:
+    docker:
+      - image: circleci/python:3.7
+    steps:
+      - checkout
+      - run:
+          name: Install Python Dependencies
+          command: |
+            python3 -m venv env
+            . env/bin/activate
+            pip3 install requirements.txt
+      - run:
+          name: build package for release
+          command: |
+            pip3 install twine
+            python3 setup.py bdist_wheel
+      - run:
+          name: Deploy package to PyPi
+          command: |
+            . env/bin/activate
+            twine upload dist/* -p ${PYPI_PASSWORD} -u ${PYPI_USERNAME}
