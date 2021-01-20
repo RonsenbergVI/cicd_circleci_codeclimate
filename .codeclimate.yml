@@ -1,0 +1,23 @@
+version: "2"
+checks:
+  argument-count:
+    config:
+      threshold: 3
+  complex-logic:
+    config:
+      threshold: 2
+  method-count:
+    config:
+      threshold: 20
+  method-lines:
+    config:
+      threshold: 10
+  nested-control-flow:
+    config:
+      threshold: 4
+  return-statements:
+    config:
+      threshold: 4
+
+exclude_patterns:
+  - "tests/"
