@@ -49,7 +49,7 @@ def setup_package():
 
     _version, _ = get_version_info(config_path)
 
-    setup(name = 'package_name',
+    setup(name = 'package-medium-post',
         version = str(_version),
         description = 'prints time in command.',
         author = 'Rene-Jean Corneille',

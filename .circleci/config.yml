@@ -15,11 +15,11 @@ workflows:
             branches:
               only: main
 jobs:
-   test-and-coverage:
+  test-and-coverage:
     docker:
       - image: circleci/python:3.7
         environment:
-         - CC_TEST_REPORTER_ID: 
+         - CC_TEST_REPORTER_ID: 10d9aa223023e63641b5ea7aa09dcf735f99e8dd406947c44b186e7526dfd527
     steps:
       - checkout
       - run:
@@ -27,7 +27,7 @@ jobs:
           command: |
             python3 -m venv env
             . env/bin/activate
-            pip3 install requirements.test.txt
+            pip3 install -r requirements.test.txt
       - run:
           name: install codeclimate test-reporter
           command: |
@@ -40,8 +40,9 @@ jobs:
       - run:
           name: run tests
           command: |
+              . env/bin/activate
+              coverage run -m pytest
               coverage report --omit=env/*,tests/*
-              coverage html --omit=env/*,tests/*
               coverage xml --omit=env/*,tests/*
       - run:
           name: Run coverage report
@@ -65,7 +66,7 @@ jobs:
           command: |
             python3 -m venv env
             . env/bin/activate
-            pip3 install requirements.txt
+            pip3 install -r requirements.txt
       - run:
           name: Build Release package
           command: |
@@ -75,7 +76,7 @@ jobs:
           name: Upload to PyPi
           command: |
             . env/bin/activate
-            twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+            twine upload --repository testpypi dist/* -p ${PYPI_PASSWORD} -u ${PYPI_USERNAME}
   deploy:
     docker:
       - image: circleci/python:3.7
@@ -86,7 +87,7 @@ jobs:
           command: |
             python3 -m venv env
             . env/bin/activate
-            pip3 install requirements.txt
+            pip3 install -r requirements.txt
       - run:
           name: build package for release
           command: |

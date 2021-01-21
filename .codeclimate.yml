@@ -15,6 +15,9 @@ checks:
   method-lines:
     config:
       threshold: 25
+  similar-code:
+      config:
+        threshold: 3
 
 exclude_patterns:
   - "tests/"
